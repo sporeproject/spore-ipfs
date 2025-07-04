@@ -1,9 +1,4 @@
-FROM ipfs/go-ipfs:v0.24.0
+FROM ipfs/kubo:v0.26.0
 
-EXPOSE 4001 5001 8080
+EXPOSE 4001 5001 8080 8081
 VOLUME /data/ipfs
-
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
-
-ENTRYPOINT ["/start.sh"]
