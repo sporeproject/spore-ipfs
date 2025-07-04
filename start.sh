@@ -11,8 +11,8 @@ if [ ! -f "$CONFIG_FILE" ]; then
 fi
 
 # Patch config if needed
-API_ADDR=$(jq -r '.Addresses.API' "$CONFIG_FILE")
-GATEWAY_ADDR=$(jq -r '.Addresses.Gateway' "$CONFIG_FILE")
+API_ADDR=$(grep '"API"' "$CONFIG_FILE" | head -n1 | sed -E 's/.*: "(.*)",/\1/')
+GATEWAY_ADDR=$(grep '"Gateway"' "$CONFIG_FILE" | head -n1 | sed -E 's/.*: "(.*)"/\1/')
 
 if [ "$API_ADDR" = "/ip4/127.0.0.1/tcp/5001" ]; then
   echo "Fixing API bind address..."

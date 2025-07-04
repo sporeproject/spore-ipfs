@@ -1,7 +1,5 @@
 FROM ipfs/go-ipfs:v0.24.0
 
-RUN apk add --no-cache jq
-
 EXPOSE 4001 5001 8080
 VOLUME /data/ipfs
 
