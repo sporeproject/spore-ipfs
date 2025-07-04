@@ -3,11 +3,18 @@
 set -e
 
 CONFIG_FILE="/data/ipfs/config"
+LOCK_FILE="/data/ipfs/repo.lock"
 
 # Initialize if needed
 if [ ! -f "$CONFIG_FILE" ]; then
   echo "Initializing IPFS..."
   ipfs init
+fi
+
+# Remove stale lock if exists
+if [ -f "$LOCK_FILE" ]; then
+  echo "Removing stale repo.lock"
+  rm -f "$LOCK_FILE"
 fi
 
 # Patch config if needed
