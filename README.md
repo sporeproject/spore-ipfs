@@ -1,98 +1,65 @@
 # Spore IPFS Node
 
-This repository contains a Docker-based deployment of a public [IPFS](https://ipfs.tech/) node used by the [Spore Project](https://sporeproject.com). It is designed for use with [Dokku](https://dokku.com/) but can be run anywhere with Docker support.
+This repository contains the container definition for the Spore IPFS node, running [Kubo](https://github.com/ipfs/kubo) on `ipfs.sporeproject.com`.  
 
-The node acts as decentralized symbolic infrastructure — preserving cultural artifacts, symbols, and ideas.
+## 🚀 Features
+- Based on [ipfs/kubo](https://hub.docker.com/r/ipfs/kubo) v0.26.0
+- Data persisted in `/data/ipfs`, surviving container restarts and rebuilds
+- Storage quota configured at **10GB** (adjustable via environment variable `IPFS_STORAGE_MAX`)
+- Exposes:
+  - IPFS Gateway: `https://ipfs.sporeproject.com` (HTTP on port `8080`)
+  - HTTP API: `http://<host>:5001` (for local access)
+  - Swarm p2p port: `4001` (for peer-to-peer connections)
 
----
 
-## Features
+## 📦 Deployment
 
-- Runs the latest [go-ipfs](https://github.com/ipfs/go-ipfs) release
-- Automatically configures a storage cap using `IPFS_STORAGE_MAX` env variable
-- Dokku-compatible with persistent volume support
-- Lightweight and production-ready
+This node runs in a Docker container orchestrated by Dokku, with:
+- a persistent volume mounted at `/data/ipfs`
+- ports exposed for the gateway (`8080`) and HTTP API (`5001`)
+- automatic TLS termination for the gateway via Let’s Encrypt
 
----
+The container automatically:
+✅ Initializes the IPFS repository if needed  
+✅ Ensures proper API and Gateway bind addresses (`0.0.0.0`)  
+✅ Removes stale lock files left by previous containers  
+✅ Enforces the configured storage maximum  
 
-## 📦 Environment Variables
+## 🔄 Lifecycle
 
-| Variable            | Description                                     | Default |
-|---------------------|-------------------------------------------------|---------|
-| `IPFS_STORAGE_MAX`  | Max storage usage (e.g. `10GB`, `20GB`)         | 10GB    |
+To rebuild or restart the node:
+- Stop the container first
+- Rebuild the image and restart it
+- The `/data/ipfs` volume ensures that content and configuration are retained
 
-Set this via:
+## ℹ️ Notes
+- Storage quota is currently set to 10GB; you can change `IPFS_STORAGE_MAX` and rebuild.
+- The WebUI (on port `5001`) may not list all pinned content; use the HTTP API to query pins or fetch content.
+- The node removes stale `repo.lock` files on startup to avoid rebuild failures.
 
-```
-dokku config:set spore-ipfs IPFS_STORAGE_MAX=10GB
-```
+## 🔗 API Examples
 
----
-
-## Deployment (via Dokku)
-
-### Step 1: Create and Configure
-
-```
-dokku apps:create spore-ipfs
-dokku domains:add spore-ipfs ipfs.sporeproject.com
-
-# Create volume for persistence
-mkdir -p /var/lib/dokku/data/storage/spore-ipfs
-dokku storage:mount spore-ipfs /var/lib/dokku/data/storage/spore-ipfs:/data/ipfs
-```
-
-### Step 2: Push the Repo
-
-```
-dokku git:sync --build 
-
+Add a file:
+```bash
+curl -F file=@hello.txt http://127.0.0.1:5001/api/v0/add
 ```
 
-### Step 3: Configure Storage (Optional)
-
-```
-dokku config:set spore-ipfs IPFS_STORAGE_MAX=20GB
-```
-
----
-
-## 🌐 Access
-
-Once deployed, your IPFS gateway will be accessible at:
-
-```
-https://ipfs.example.com/ipfs/<CID>
+Check if pinned:
+```bash
+curl -X POST "http://127.0.0.1:5001/api/v0/pin/ls?arg=<CID>"
 ```
 
-For example:
-
+Retrieve stats:
+```bash
+curl -X POST "http://127.0.0.1:5001/api/v0/object/stat?arg=<CID>"
 ```
-https://ipfs.example.com/ipfs/QmExample1234...
+
+Gateway:
+```text
+https://ipfs.sporeproject.com/ipfs/<CID>
 ```
 
 ---
 
-## 💡 Tips
-
-- Use `spore-api` or any backend to POST files to `http://spore-ipfs:5001/api/v0/add`
-- For high availability, consider pinning via IPFS Cluster in the future
-- Keep this container separated from public-facing apps (e.g. frontend) using Docker/Dokku network isolation
-
----
-
-## 🔐 Security Notes
-
-- This repo includes no secrets or production domains
-- All configuration is handled via environment variables
-- Gateway port (8080) can be routed through HTTPS using Dokku + Let's Encrypt
-
----
-
-## 📜 License
-
-MIT — feel free to fork, modify, or build upon it.
-
----
-
-> _“The symbol spreads. The forest remembers.” — Spore Project_
+For more details on Kubo and the IPFS HTTP API, see:  
+📖 [https://docs.ipfs.tech/reference/kubo/rpc/](https://docs.ipfs.tech/reference/kubo/rpc/)
